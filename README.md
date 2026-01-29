@@ -23,3 +23,14 @@
 ```bash
 git clone [https://github.com/Kate-vsn/ai-screenwriter-assistant.git](https://github.com/Kate-vsn/ai-screenwriter-assistant.git)
 cd ai-screenwriter-assistant
+
+# Запуск проекта (Docker)
+
+Проект полностью контейнеризирован. Вам не нужно устанавливать Python локально.
+
+# 1. Подготовка
+Создайте файл `.env` в корневой папке и добавьте ваш ключ:
+```ini
+LLM_API_KEY="ваш_ключ_из_google_ai_studio"
+LLM_MODEL="gemini-2.5-flash"
+
