@@ -1,0 +1,25 @@
+# AI Screenwriter Assistant
+
+Помощник для сценаристов на базе Gemini 2.5 Flash с использованием архитектуры RAG (Retrieval-Augmented Generation).
+
+Проект позволяет консультироваться по теории сценарного мастерства, опираясь на загруженные учебники (например, Джозеф Кэмпбелл), и генерировать сцены в правильном формате.
+
+## Основные возможности
+- Smart Consultation (RAG): ИИ ищет ответы в базе знаний (PDF-данных) и выдает советы со ссылками на первоисточники.
+- Scene Generation: Генерация сценариев по заданным параметрам (жанр, персонажи, тон).
+- Vector Database: Использование ChromaDB для хранения и поиска смысловых векторов.
+
+## Технологический стек
+- Python 3.11+
+- FastAPI (Backend framework)
+- Google GenAI SDK (Gemini 2.5 Flash)
+- ChromaDB (Vector Database)
+- PyMuPDF (PDF processing)
+- Docker & Docker Compose
+
+## Как запустить
+
+### 1. Клонирование репозитория
+```bash
+git clone [https://github.com/Kate-vsn/ai-screenwriter-assistant.git](https://github.com/Kate-vsn/ai-screenwriter-assistant.git)
+cd ai-screenwriter-assistant
