@@ -1,14 +1,28 @@
 version: '3.8'
 
 services:
-  api:
+  screenwriter_api:
     build: .
     container_name: screenwriter_api
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     env_file:
       - .env
     volumes:
       - .:/app
-      - /app/venv
-    restart: always
+      - ./chromadb_storage:/app/chromadb_storage
+
+  frontend:
+    build: .
+    container_name: screenwriter_ui
+
+    command: streamlit run src/frontend/app.py
+    ports:
+      - "8501:8501"  
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - screenwriter_api
