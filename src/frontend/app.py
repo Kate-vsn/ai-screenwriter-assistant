@@ -57,10 +57,27 @@ if prompt := st.chat_input("Задайте вопрос или опишите с
                 
                 if response.status_code == 200:
                     data = response.json()
-                    answer = data.get("response", data.get("scene_script", "Нет ответа"))
-                    
-                    st.markdown(answer)
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                    if mode == "Генерация сцены":
+                        script_text = data.get("scene_script", "Нет ответа")
+                        
+                        st.success("Черновик готов! 🎬")
+                        
+                        st.text_area(
+                            label="Сценарий (Fountain)", 
+                            value=script_text, 
+                            height=600,
+                            help="Скопируйте этот текст и вставьте в Kit Scenarist или Final Draft"
+                        )
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant", 
+                            "content": f"```text\n{script_text}\n```"
+                        })
+
+                    else:
+                        answer = data.get("response", "Нет ответа")
+                        st.markdown(answer)
+                        st.session_state.messages.append({"role": "assistant", "content": answer})
                 else:
                     st.error(f"Ошибка сервера: {response.status_code}")
             except Exception as e:

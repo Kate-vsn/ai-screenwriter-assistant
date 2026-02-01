@@ -7,11 +7,11 @@ from src.rag.service import search_context
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
-class ScenarioRequest(BaseModel):
+class SceneRequest(BaseModel):
     genre: str
     characters: str
-    plot_point: str
-    tone: str = "dramatic"
+    plot_outline: str
+    tone: str
 
 class ConsultRequest(BaseModel):
     question: str
@@ -26,18 +26,80 @@ client = genai.Client(api_key=settings.LLM_API_KEY)
 async def root():
     return {"status": "ok", "service": "AI Screenwriter + RAG"}
 
-@app.post("/generate/scene", response_model=AIResponse)
-async def generate_scene(request: ScenarioRequest):
-    prompt = f"""
-    Напиши сцену.
-    Жанр: {request.genre}. Персонажи: {request.characters}.
-    Ситуация: {request.plot_point}. Тон: {request.tone}.
+@app.post("/generate/scene")
+async def generate_scene(request: SceneRequest):
     """
+    Генерирует черновик сцены в сценарном формате, используя LLM.
+    """
+    
+    system_instruction = """
+    Ты — профессиональный голливудский сценарист.
+    Твоя задача — написать сцену на основе вводных данных.
+    
+    ФОРМАТ ВЫВОДА (СТРОГО СОБЛЮДАЙ FOUNTAIN/СЦЕНАРНЫЙ ФОРМАТ):
+    1. Заголовки сцен (Sluglines) пиши КАПСОМ: "ИНТ. КОМНАТА - ДЕНЬ" или "EXT. STREET - NIGHT".
+    2. Имена персонажей перед диалогом пиши КАПСОМ.
+    3. Ремарки (parentheticals) пиши в скобках на отдельной строке под именем.
+    4. Описание действия (Action lines) пиши обычным текстом.
+    5. НЕ пиши никаких вступлений типа "Вот ваша сцена" или "Черновик готов". Начинай сразу с заголовка сцены.
+    6. Пиши ЧИСТЫМ ТЕКСТОМ. Строго запрещены HTML теги (<center> и т.д.).
+    СТИЛЬ:
+    - Диалоги должны быть живыми, с подтекстом.
+    - Избегай клише.
+    - Соблюдай заданный пользователем тон.
+    Сам ВЫВОД (СТРОГИЙ FOUNTAIN):
+    1. СЦЕНАРНЫЙ БЛОК:
+       [ПУСТАЯ СТРОКА]
+       ИМЯ ПЕРСОНАЖА (Всегда на русском, КАПСОМ)
+       (ремарка - если есть, в скобках, с маленькой буквы)
+       Текст диалога
+       [ПУСТАЯ СТРОКА]
+    
+    2. ВАЖНЕЙШИЕ ПРАВИЛА:
+       - НИКОГДА не пиши Имя и Диалог в одну строку.
+       - НИКОГДА не пиши Ремарку и Диалог в одну строку.
+       - Между именем героя и его репликой ОБЯЗАТЕЛЬНО должен быть перенос строки.
+       - Имена персонажей пиши только на РУССКОМ языке (МАРК, а не MARK).
+       
+    3. ОПИСАНИЕ ДЕЙСТВИЯ:
+       Пиши обычными абзацами. Оставляй пустую строку перед заголовком сцены.
+
+    ПРИМЕР ТОЧНОГО ВЫПОЛНЕНИЯ:
+    
+    МАРК
+    (устало)
+    Слава богу.
+
+    ЛЕНА
+    (не отрываясь)
+    Как всегда.
+    """
+
+    full_prompt = f"""
+    Напиши сцену по следующим параметрам:
+    
+    Жанр: {request.genre}
+    Персонажи: {request.characters}
+    Тон: {request.tone}
+    
+    Сюжетное описание сцены: 
+    {request.plot_outline}
+    """
+
     try:
-        resp = client.models.generate_content(model=settings.LLM_MODEL, contents=prompt)
-        return AIResponse(response=resp.text, context_used=False)
+        resp = client.models.generate_content(
+            model=settings.LLM_MODEL, 
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.7
+            ) 
+        )
+        
+        return {"scene_script": resp.text}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"AI Generation Error: {str(e)}")
 
 @app.post("/consult", response_model=AIResponse)
 async def consult_guru(request: ConsultRequest):
